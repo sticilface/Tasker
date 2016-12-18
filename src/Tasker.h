@@ -26,13 +26,11 @@ Priority!  not sure how to do this...
 
 #include "TaskerClass.h"
 #include "msTask.h"
-#include "usTask.h"
+#include "Sequence.h"
 #include "TaskMethods.h"
 
 
 
 typedef Tasker<Task, Sync<Task>> SyncTasker;
 typedef Tasker<Task, ASync<Task>> ASyncTasker;
-
-typedef Tasker<usTask, Sync<usTask>> usSyncTasker;
-typedef Tasker<usTask, ASync<usTask>> usASyncTasker;
+typedef Tasker<Sequence, Sync<Sequence>> SequenceTasker;

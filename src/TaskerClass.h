@@ -19,12 +19,12 @@ public:
 	Tasker() {};
 	~Tasker() {};
 
-	TaskType & add(taskerCb_t Cb)
+	TaskType & add(taskerCb_t Cb, bool useMicros = false)
 	{
 		//debugOut(Serial);
 
 		//Serial.println("ADD called");
-		LoopMethod::_list.push_back(typename LoopMethod::task_t(new TaskType(Cb)));
+		LoopMethod::_list.push_back(typename LoopMethod::task_t(new TaskType(Cb, useMicros)));
 		LoopMethod::_it = LoopMethod::_list.begin();
 
 //		debugOut(Serial); 

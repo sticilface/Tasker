@@ -16,7 +16,7 @@ public:
 	typedef std::function<void(Task&)> taskerCb_t;
 
 
-	Task (taskerCb_t cb)
+	Task (taskerCb_t cb, bool useMicros = false) : _useMicros(useMicros)
 	{
 		//Serial.printf("  Task created @%p\n", this);
 		_cb = cb;	
@@ -25,13 +25,12 @@ public:
 	~Task()
 	{
 		//Serial.printf("  Task deleted @%p (%s)\n", this, (_name)? _name : "null" );	
-
 		if (_onEnd) {
 			_onEnd();
 		}
 	}
 
-	bool run(const uint8_t priority);
+	bool run(const uint8_t priority = 0);
 
 	Task & setTimeout(uint32_t timeout) 
 	{
@@ -70,14 +69,13 @@ public:
 
 	Task & setName(const char * name) 
 	{
-		//Serial.printf("  name = %s\n", name);
 		_name = name;
 		return *this;
 	}
 
 	const char * name() 
 	{
-		return _name;
+		return (_name)? _name : "null" ;
 	}
 
 	void reset() {
@@ -90,10 +88,14 @@ public:
 	}
 
 	uint32_t count{0};
-	bool hasRun{false};
-	uint32_t lastRunTime{0};
+	bool finished{false}; 
 
 private:
+	
+	inline uint32_t _getTime() {
+		return (_useMicros)? micros() : millis(); 
+	}
+
 	taskerCb_t _cb;
 	bool _repeat{false};
 	uint32_t _timeout{0};
@@ -103,12 +105,6 @@ private:
 	const char * _name{nullptr};
 	int8_t _state{-1}; 
 	std::function<void(void)> _onEnd;  
-
-public:
-	//  times...
-	uint32_t _cycles{0};
-	uint32_t _micros{0};
-	uint32_t _millis{0};
-	uint32_t _count2{0};
+	const bool _useMicros{false}; 
 
 };
