@@ -15,6 +15,9 @@ Priority!  not sure how to do this...
 
 */
 
+#pragma once
+
+
 #include <Arduino.h>
 #include <functional>
 #include <list>
