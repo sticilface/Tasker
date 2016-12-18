@@ -32,11 +32,12 @@ public:
 
 	bool run(const uint8_t priority = 0);
 
-	void runCb() {
+	Task & runCb() {
 		_lastcalled = _getTime();
 		if (_cb) {
 			_cb(*this); 
 		}
+		return *this; 
 	}
 
 	Task & setTimeout(uint32_t timeout) 
