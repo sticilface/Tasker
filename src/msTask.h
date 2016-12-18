@@ -35,7 +35,7 @@ public:
 	void runCb() {
 		_lastcalled = _getTime();
 		if (_cb) {
-			_cb(); 
+			_cb(*this); 
 		}
 	}
 
