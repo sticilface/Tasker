@@ -17,6 +17,8 @@ Priority!  not sure how to do this...
 
 #pragma once
 
+#ifndef MY_TASKER_H
+#define MY_TASKER_H
 
 #include <Arduino.h>
 #include <functional>
@@ -34,3 +36,7 @@ Priority!  not sure how to do this...
 typedef Tasker<Task, Sync<Task>> SyncTasker;
 typedef Tasker<Task, ASync<Task>> ASyncTasker;
 typedef Tasker<Sequence, Sync<Sequence>> SequenceTasker;
+
+
+#endif
+
