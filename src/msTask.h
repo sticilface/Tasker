@@ -87,6 +87,12 @@ public:
 		return *this; 
 	}
 
+	Task & setPersistent(bool donotdelete) {
+		_doNotDelete = donotdelete; 
+		return *this; 
+	}
+
+
 	uint32_t count{0};
 	bool finished{false}; 
 
@@ -106,5 +112,6 @@ private:
 	int8_t _state{-1}; 
 	std::function<void(void)> _onEnd;  
 	const bool _useMicros{false}; 
+	bool _doNotDelete{false}; 
 
 };

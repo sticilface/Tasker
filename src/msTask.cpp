@@ -3,7 +3,7 @@
 bool Task::run(const uint8_t priority)
 {
 	if (finished) {
-		return true;
+		return !_doNotDelete;
 	}
 
 	if (_enabled && _state == -1) {
@@ -20,12 +20,11 @@ bool Task::run(const uint8_t priority)
 			if (_cb) {
 				_cb(*this);
 
-
 				if (_repeat) {
 					_lastcalled = _getTime();
 				} else {
 
-					return true; //  calls delete!
+					return !_doNotDelete; //  calls delete!
 				}
 			}
 
