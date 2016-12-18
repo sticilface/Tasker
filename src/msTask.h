@@ -32,6 +32,13 @@ public:
 
 	bool run(const uint8_t priority = 0);
 
+	void runCb() {
+		_lastcalled = _getTime();
+		if (_cb) {
+			_cb(); 
+		}
+	}
+
 	Task & setTimeout(uint32_t timeout) 
 	{
 		_timeout = timeout;
