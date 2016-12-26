@@ -12,7 +12,7 @@
 #include <memory>
 
 
-class Task 
+class Task
 {
 
 public:
@@ -23,28 +23,63 @@ public:
 	Task (taskerCb_t cb, bool useMicros = false) : _useMicros(useMicros)
 	{
 		//Serial.printf("  Task created @%p\n", this);
-		_cb = cb;	
+		_cb = cb;
 	}
 
 	~Task()
 	{
-		//Serial.printf("  Task deleted @%p (%s)\n", this, (_name)? _name : "null" );	
+		//Serial.printf("  Task deleted @%p (%s)\n", this, (_name)? _name : "null" );
 		if (_onEnd) {
 			_onEnd();
 		}
 	}
 
-	bool run(const uint8_t priority = 0);
-
-	Task & runCb() {
-		_lastcalled = _getTime();
-		if (_cb) {
-			_cb(*this); 
+	bool run(const uint8_t priority = 0)
+	{
+		if (finished) {
+			return !_doNotDelete;
 		}
-		return *this; 
+
+		if (_enabled && _state == -1) {
+			_state = 0;
+			_lastcalled = _getTime();
+		}
+
+		if (_state == 0 && _enabled && _priority <= priority) {
+
+			if (_getTime() - _lastcalled > _timeout) {
+
+				count++;
+
+				if (_cb) {
+					_cb(*this);
+
+					if (_repeat) {
+						_lastcalled = _getTime();
+					} else {
+
+						return !_doNotDelete; //  calls delete!
+					}
+				}
+
+			}
+
+		}
+
+		return false;
+
 	}
 
-	Task & setTimeout(uint32_t timeout) 
+	Task & runCb()
+	{
+		_lastcalled = _getTime();
+		if (_cb) {
+			_cb(*this);
+		}
+		return *this;
+	}
+
+	Task & setTimeout(uint32_t timeout)
 	{
 		_timeout = timeout;
 		return *this;
@@ -56,62 +91,66 @@ public:
 		return *this;
 	}
 
-	Task & setPriority(uint8_t pr) 
+	Task & setPriority(uint8_t pr)
 	{
 		_priority = pr;
 		return *this;
 	}
 
-	uint8_t getPriority() 
+	uint8_t getPriority()
 	{
 		return _priority;
 	}
 
-	Task & enable()  
+	Task & enable()
 	{
 		_enabled = true;
 		return *this;
 	}
 
-	Task & disable() 
+	Task & disable()
 	{
 		_enabled = false;
 		return *this;
 	}
 
-	Task & setName(const char * name) 
+	Task & setName(const char * name)
 	{
 		_name = name;
 		return *this;
 	}
 
-	const char * name() 
+	const char * name()
 	{
-		return (_name)? _name : "null" ;
+		return (_name) ? _name : "null" ;
 	}
 
-	void reset() {
-		_state = -1;  
+	void reset()
+	{
+		_state = -1;
 	}
 
-	Task & onEnd(std::function<void(void)> Cb) {
-		_onEnd = Cb; 
-		return *this; 
+	Task & onEnd(std::function<void(void)> Cb)
+	{
+		_onEnd = Cb;
+		return *this;
 	}
 
-	Task & setPersistent(bool donotdelete) {
-		_doNotDelete = donotdelete; 
-		return *this; 
+	Task & setPersistent(bool donotdelete)
+	{
+		_doNotDelete = donotdelete;
+		return *this;
 	}
 
 
 	uint32_t count{0};
-	bool finished{false}; 
+	bool finished{false};
 
 private:
-	
-	inline uint32_t _getTime() {
-		return (_useMicros)? micros() : millis(); 
+
+	inline uint32_t _getTime()
+	{
+		return (_useMicros) ? micros() : millis();
 	}
 
 	taskerCb_t _cb;
@@ -121,10 +160,10 @@ private:
 	bool _enabled{true};
 	uint8_t _priority{0};
 	const char * _name{nullptr};
-	int8_t _state{-1}; 
-	std::function<void(void)> _onEnd;  
-	const bool _useMicros{false}; 
-	bool _doNotDelete{false}; 
+	int8_t _state{ -1};
+	std::function<void(void)> _onEnd;
+	const bool _useMicros{false};
+	bool _doNotDelete{false};
 
 };
 
