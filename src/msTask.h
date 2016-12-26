@@ -2,6 +2,10 @@
 #pragma once
 
 
+#ifndef MY_TASKER_TASK_H
+#define MY_TASKER_TASK_H
+
+
 #include <Arduino.h>
 #include <functional>
 #include <list>
@@ -123,3 +127,6 @@ private:
 	bool _doNotDelete{false}; 
 
 };
+
+
+#endif

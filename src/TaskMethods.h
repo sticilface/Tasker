@@ -1,7 +1,8 @@
 
 #pragma once
 
-
+#ifndef MY_TASKER_METHODS_H
+#define MY_TASKER_METHODS_H
 
 #include <Arduino.h>
 #include <functional>
@@ -213,3 +214,6 @@ private:
 	bool _repeat{false};
 	uint8_t _currentPriority{0};
 };
+
+
+#endif

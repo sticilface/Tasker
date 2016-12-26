@@ -1,6 +1,8 @@
 
 #pragma once
 
+#ifndef MY_TASKER_CLASS_H
+#define MY_TASKER_CLASS_H
 
 #include <Arduino.h>
 #include <functional>
@@ -36,6 +38,21 @@ public:
 		// LoopMethod::_it = LoopMethod::_list.begin();
 		// return ret;
 	}
+
+	TaskType & addBefore(taskerCb_t Cb, bool useMicros = false)
+	{
+
+
+
+	}
+
+	TaskType & addAfter(taskerCb_t Cb, bool useMicros = false)
+	{
+
+
+
+	}
+
 
 	bool remove(TaskType & task)
 	{
@@ -80,7 +97,7 @@ public:
 
 	}
 
-
+#endif
 
 
 

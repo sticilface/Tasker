@@ -1,5 +1,10 @@
 #pragma once
 
+
+#ifndef MY_TASKER_SEQUENCE_H
+#define MY_TASKER_SEQUENCE_H
+
+
 #include <Arduino.h>
 #include <functional>
 #include <list>
@@ -70,3 +75,6 @@ private:
 	const bool _useMicros{false}; 
 
 };
+
+#endif
+
