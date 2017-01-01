@@ -36,6 +36,10 @@ public:
 
 		typename taskList_t::iterator it;
 
+		if (_list.size() == 0) {
+			return; 
+		}
+
 		if (_it != _list.end()) {
 			it = _it; 
 		} else {
