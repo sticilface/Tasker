@@ -52,10 +52,15 @@ public:
 				count++;
 
 				if (_cb) {
+					//if (count < 3 ) { Serial.printf("Run 0x%p (%s)\n", this, (_name)? _name : "null" ); } 
 					_cb(*this);
 
 					if (_repeat) {
 						_lastcalled = _getTime();
+						if (_repeatNo == count) {
+							return !_doNotDelete;
+						}
+						
 					} else {
 
 						return !_doNotDelete; //  calls delete!
@@ -88,6 +93,18 @@ public:
 	Task & setRepeat(bool repeat = true)
 	{
 		_repeat = repeat;
+		return *this;
+	}
+
+	Task & setRepeat(int number)
+	{
+		_repeatNo = number;
+
+		if (number > 0) {
+			_repeat = true; 
+		} else {
+			_repeat = false; 
+		}
 		return *this;
 	}
 
@@ -155,6 +172,7 @@ private:
 
 	taskerCb_t _cb;
 	bool _repeat{false};
+	int _repeatNo{-1}; 
 	uint32_t _timeout{0};
 	uint32_t _lastcalled{0};
 	bool _enabled{true};

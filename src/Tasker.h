@@ -34,7 +34,7 @@ Priority!  not sure how to do this...
 
 
 typedef Tasker<Task, Sync<Task>> SyncTasker;
-typedef Tasker<Task, ASync<Task>> ASyncTasker;
+typedef Tasker<Task, ASync<Task>> ASyncTasker;  //  runs all the tasks at the same time.  multitasking.. 
 typedef Tasker<Sequence, Sync<Sequence>> SequenceTasker;
 
 
