@@ -38,5 +38,8 @@ typedef Tasker<Task, ASync<Task>> ASyncTasker;  //  runs all the tasks at the sa
 typedef Tasker<Sequence, Sync<Sequence>> SequenceTasker;
 
 
+typedef std::shared_ptr<SyncTasker> pSyncTasker;
+typedef std::shared_ptr<ASyncTasker> pASyncTasker;
+
 #endif
 

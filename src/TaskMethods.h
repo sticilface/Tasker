@@ -24,27 +24,11 @@ public:
 	{
 		uint32_t startTime = micros();
 
-		//_loopTime = ( (_loopTime * _loopCounter++) + (startTime - _startTime)) / _loopCounter;
-
-		//_startTime = startTime;
-
-		// if ( _it == _list.end() || _bailOut == false ) {
-		// 	_it = _list.begin();
-		// }
-
-		//  work on allocation of time
-
-
-		typename taskList_t::iterator it;
-
 		if (_list.size() == 0) {
-
-			if (_listEmptyFn && !listEmptyFnFlag) {
-				_listEmptyFn();
-				listEmptyFnFlag = true; 
-			}
 			return;
 		}
+
+		typename taskList_t::iterator it;
 
 		if (_it != _list.end()) {
 			it = _it;
@@ -54,7 +38,12 @@ public:
 
 		for ( /*   */ ; it != _list.end(); /*    */ ) {
 
-			bool todelete = (*it)->run(_currentPriority);
+			bool todelete = false; 
+
+			if (*_it) {
+				//Serial.printf("%p\n", it->get());
+				todelete = (*it)->run(_currentPriority);
+			}
 
 			if (todelete) {
 				//Serial.printf(" Function Finished: @%p (%s)\n", &*it, ((*it)->name())? (*it)->name() : "null" );
@@ -134,15 +123,30 @@ public:
 		_maxWait = wait;
 	}
 
-	void SetEmptyFn(EmptyCb_t Fn) {
-		_listEmptyFn = Fn; 
-	}
+	// void SetEmptyFn(EmptyCb_t Fn) {
+	// 	listEmptyFn = Fn;
+	// }
+
+	// void clearList() {
+
+	// 	typename taskList_t::iterator ptr; 
+
+	// 	for (ptr = _list.begin(); ptr != _list.end(); ) {
+	// 		ptr = _list.erase(ptr);
+	// 	}
+	// }
+
+
 
 	taskList_t _list;
+
+
 	typename taskList_t::iterator _it;
 
 	bool listEmptyFnFlag{true};
 
+protected:
+	//EmptyCb_t listEmptyFn;
 
 private:
 
@@ -150,8 +154,8 @@ private:
 	uint32_t _maxWait{0};
 	//bool _enablePriority{false};
 	uint8_t _currentPriority{0};
-	EmptyCb_t _listEmptyFn; 
-	
+
+
 };
 
 
@@ -177,49 +181,40 @@ public:
 	{
 
 		if (_list.size() == 0) {
-
-			if (_listEmptyFn && !listEmptyFnFlag) {
-				_listEmptyFn();
-				listEmptyFnFlag = true; 
-			}
 			return;
 		}
 
 
 		if (_enable && _it != _list.end()) {
 
-			bool next_is_concurrent = false; 
+			bool finished = false; 
 
-//			do {
+			if (*_it) {
+				finished = (*_it)->run(_currentPriority);
+			}
 
-				bool finished = (*_it)->run(_currentPriority);
+			if (finished) {
 
-				if (finished) {
-
-					if (!_repeat) {
-						_it = _list.erase(_it); //  remove task once done, if not repeating!
-					} else {
-						_it++;
-					}
-
-
-					if (_list.size() && _repeat && _it == _list.end()) {
-						_it = _list.begin();
-
-						typename taskList_t::iterator it;
-
-						for (it = _list.begin(); it != _list.end(); ++it ) {
-
-							(*it)->reset();
-
-						}
-
-					}
-
+				if (!_repeat) {
+					_it = _list.erase(_it); //  remove task once done, if not repeating!
+				} else {
+					_it++;
 				}
 
-			// } while (next_is_concurrent = true); 
+				(*_it)->reset(); //  this is important as it resets the start time for the next sequential task
 
+				if (_repeat && _list.size() && _it == _list.end()) {
+					_it = _list.begin();
+
+					typename taskList_t::iterator it;
+
+					for (it = _list.begin(); it != _list.end(); ++it ) {
+
+						(*it)->reset();
+
+					}
+				}
+			}
 		}
 
 	}
@@ -227,9 +222,6 @@ public:
 	void enable(bool enable)
 	{
 		_enable = enable;
-		// if (_list.size() && _it != _list.end()) {
-		// 	(*_it)->reset();
-		// }
 	}
 
 	void repeat(bool repeat)
@@ -239,23 +231,30 @@ public:
 
 	void sort() {} //  empty function...
 
-	void SetEmptyFn(EmptyCb_t Fn) {
-		_listEmptyFn = Fn; 
-	}
+	// void clearList() {
 
-	bool listEmptyFnFlag{true};
+	// 	typename taskList_t::iterator ptr; 
+
+	// 	for (ptr = _list.begin(); ptr != _list.end(); ) {
+	// 		ptr = _list.erase(ptr);
+	// 	}
+	// }
+
+
+
+	//bool listEmptyFnFlag{true};
 
 protected:
 
 	taskList_t _list;
 	typename taskList_t::iterator _it;
-	
+	//EmptyCb_t listEmptyFn;
 
 private:
 	bool _enable{true};
 	bool _repeat{false};
 	uint8_t _currentPriority{0};
-	EmptyCb_t _listEmptyFn; 
+
 
 };
 

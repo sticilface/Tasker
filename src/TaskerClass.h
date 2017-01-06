@@ -17,35 +17,35 @@ class Tasker: public LoopMethod
 public:
 	typedef LoopMethod loop_m;
 	typedef TaskType task_t;
-	//typedef TaskType* task_p;
+	//typedef std::shared_ptr<TaskerType> tasker_p;
 	typedef std::function<void(TaskType&)> taskerCb_t;
 
-	static uint8_t tasker_id; 
+
+	static uint8_t tasker_id;
 
 	Tasker() {};
-	~Tasker() {};
+
+	~Tasker()
+	{
+
+		Serial.printf("~Tasker() %p\n", this);
+		clearList(); 
+
+	};
 
 	TaskType & add(taskerCb_t Cb, bool useMicros = false)
 	{
-		//debugOut(Serial);
 
-		//Serial.println("ADD called");
 		LoopMethod::_list.push_back(typename LoopMethod::task_t(new TaskType(Cb, useMicros)));
 		LoopMethod::_it = LoopMethod::_list.begin();
 
-//		debugOut(Serial);
-		LoopMethod::listEmptyFnFlag = false;
 
-		TaskType * ret = &*LoopMethod::_list.back();
+		// TaskType * ret = &*LoopMethod::_list.back();
 
-		Serial.printf("Added 0x%p\n", ret);
+		//Serial.printf("Added Task %p\n", ret);
 
 		return *LoopMethod::_list.back();
 
-		// TaskType & ret = *LoopMethod::_list.back();
-		// LoopMethod::sort();
-		// LoopMethod::_it = LoopMethod::_list.begin();
-		// return ret;
 	}
 
 	TaskType & addBefore(taskerCb_t Cb, bool useMicros = false)
@@ -62,29 +62,41 @@ public:
 
 	}
 
+	bool goToTask(TaskType & task, bool runImmediately = false) {
+
+	typename LoopMethod::taskList_t::iterator it;
+		for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); ++it ) {
+			if (&task == it->get()) {	
+				LoopMethod::_it == it  ;
+				if (runImmediately) {
+					it->run(0, true); 
+				}
+				return true;
+			} 
+		}
+
+		return false; 
+	}
+
 
 	bool remove(TaskType & task)
 	{
 		debugOut(Serial);
 
-		Serial.printf("Removing Task: @%p ", &task );
-		
 		typename LoopMethod::taskList_t::iterator it;
 
-		for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); /*  leave empty */ ) {
+		for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); ++it ) {
 
-			if (&task == it->get()) {
+			if (&task == it->get()) {	
 
-				if (LoopMethod::_it == it) { ++LoopMethod::_it; } //  this line advances the stored iterator... if the one being deleted is due to be run next!!!
+				LoopMethod::_list.erase(it); 
 
-				it = LoopMethod::_list.erase(it);
-				Serial.println("done");
-
+				if (LoopMethod::_it == it && LoopMethod::_it != LoopMethod::_list.end()) {	
+					LoopMethod::_it++;
+				} 
 
 				return true;
-			} else {
-				it++;
-			}
+			} 
 		}
 
 		Serial.println("task not found");
@@ -99,7 +111,7 @@ public:
 	void debugOut(Stream & stream)
 	{
 
-		stream.println("\n*****  Tasker *****  ");
+		stream.printf("\n*****  Tasker %p *****  ", this);
 		stream.printf("Heap: %u\n", ESP.getFreeHeap());
 		stream.printf("Tasks Running :%u\n", LoopMethod::_list.size());
 		//stream.printf("us Per Loop :%uus = %u cycles\n", _loopTime, microsecondsToClockCycles(_loopTime));
@@ -117,38 +129,65 @@ public:
 
 	}
 
+	// template<class TaskerType>
+	// TaskerType & addSubTasker (bool deleteAfter = true)
+	// {
+
+	// 	TaskerType * ptr = new TaskerType;  // create new pointer to tasker type...  sync or async...
+
+	// 	task_t & task = this->add( [ptr] (task_t & t) {  // add the loop to it...
+
+	// 		ptr->loop();
+
+	// 	}).setRepeat(true);
+
+	// 	if (deleteAfter) {
+	// 		ptr->SetEmptyFn( [&task, this, ptr] () {
+	// 			this->remove(task);
+	// 			delete ptr;
+	// 		});
+	// 	}
+
+	// 	Serial.printf("[addSubTasker] Creating SubTask : %p = addr in parent tasker\n", &task);
+
+	// 	return *ptr;
+
+	// }
+
 	template<class TaskerType>
-	TaskerType & addSubTasker (bool deleteAfter = true)
+	std::shared_ptr<TaskerType> addSubTasker (bool doNotDelete = false)
 	{
 
-		TaskerType * ptr = new TaskerType;  // create new pointer to tasker type...  sync or async...
+		std::shared_ptr<TaskerType> ptr = std::make_shared<TaskerType>();  // create new smart pointer to tasker type...  sync or async...
 
-		task_t & task = this->add( [ptr] (task_t & t) {  // add the loop to it...
+		typename TaskerType::task_t & task =  this->add( [ptr, this, doNotDelete] (task_t & t) {  // add the loop to it...
+			
+			//  this checks the count... if list is empty, no one is hanging onto the pointer for use later, and it is empty... then delete... 
+			//  But only if the tasker is created with that in mind!!!!
+			if (!doNotDelete && ptr.unique() && ptr->isEmpty()){
 
+				//Serial.printf("LAMBDA: Removing %p from tasker %p\n", &t, this);
+				//this->remove(t); //  can't remove this as YOU ARE IN IT...
+				t.setRepeat(false);
+				//Serial.printf("LAMBDA: REturned \n");
+
+				return; 
+			}
 			ptr->loop();
 
 		}).setRepeat(true);
 
-		if (deleteAfter) {
-
-
-			ptr->SetEmptyFn( [&task, this, ptr] () {
-
-				Serial.println("[addSubTasker]  Deleting SubTask"); 
-				this->remove(task);
-				delete ptr;
-
-			});
-
-
-
-		}
-
-		Serial.printf("[addSubTasker] Creating SubTask : 0x%p = addr in parent tasker\n", &task);
-
-		return *ptr; 
+		return ptr;
 
 	}
+
+	bool isEmpty()
+	{
+
+		return (LoopMethod::_list.size() == 0);
+	}
+
+
 
 #endif
 
@@ -160,6 +199,8 @@ public:
 	// uint32_t _loopTime{0};
 	// uint32_t _loopCounter{0};
 //	uint32_t _maxWait{0};
+
+	//task_t * _parentLoopTask{nullptr};
 
 
 };

@@ -24,35 +24,27 @@ public:
 	{
 		//Serial.printf("  Task created @%p\n", this);
 		_cb = cb;
+		_lastcalled = _getTime(); 
 	}
 
 	~Task()
 	{
-		//Serial.printf("  Task deleted @%p (%s)\n", this, (_name)? _name : "null" );
+		//Serial.printf("  Task deleted @%p (%s)\n", this, (_name) ? _name : "null" );
 		if (_onEnd) {
 			_onEnd();
 		}
 	}
 
-	bool run(const uint8_t priority = 0)
+	bool run(const uint8_t priority = 0, const bool override = false)
 	{
-		if (finished) {
-			return !_doNotDelete;
-		}
+		if (override || ( _enabled && _priority <= priority)) {
 
-		if (_enabled && _state == -1) {
-			_state = 0;
-			_lastcalled = _getTime();
-		}
-
-		if (_state == 0 && _enabled && _priority <= priority) {
-
-			if (_getTime() - _lastcalled > _timeout) {
+			if (override || (_getTime() - _lastcalled > _timeout)) {
 
 				count++;
 
 				if (_cb) {
-					//if (count < 3 ) { Serial.printf("Run 0x%p (%s)\n", this, (_name)? _name : "null" ); } 
+					//if (count < 3 ) { Serial.printf("Run 0x%p (%s)\n", this, (_name)? _name : "null" ); }
 					_cb(*this);
 
 					if (_repeat) {
@@ -60,7 +52,7 @@ public:
 						if (_repeatNo == count) {
 							return !_doNotDelete;
 						}
-						
+
 					} else {
 
 						return !_doNotDelete; //  calls delete!
@@ -101,9 +93,9 @@ public:
 		_repeatNo = number;
 
 		if (number > 0) {
-			_repeat = true; 
+			_repeat = true;
 		} else {
-			_repeat = false; 
+			_repeat = false;
 		}
 		return *this;
 	}
@@ -144,7 +136,7 @@ public:
 
 	void reset()
 	{
-		_state = -1;
+		_lastcalled = millis(); 
 	}
 
 	Task & onEnd(std::function<void(void)> Cb)
@@ -161,7 +153,7 @@ public:
 
 
 	uint32_t count{0};
-	bool finished{false};
+	//bool finished{false};
 
 private:
 
@@ -170,18 +162,94 @@ private:
 		return (_useMicros) ? micros() : millis();
 	}
 
-	taskerCb_t _cb;
+	taskerCb_t  _cb;
 	bool _repeat{false};
-	int _repeatNo{-1}; 
+	int _repeatNo{ -1};
 	uint32_t _timeout{0};
 	uint32_t _lastcalled{0};
 	bool _enabled{true};
 	uint8_t _priority{0};
 	const char * _name{nullptr};
-	int8_t _state{ -1};
+	//int8_t _state{ -1};
 	std::function<void(void)> _onEnd;
 	const bool _useMicros{false};
 	bool _doNotDelete{false};
+
+};
+
+
+
+
+class SimpleTask
+{
+
+public:
+
+	typedef std::function<void(SimpleTask&)> taskerCb_t;
+
+	SimpleTask (taskerCb_t cb, bool useMicros = false)
+	{
+		_cb = cb;
+		_lastcalled = millis();
+	}
+
+	~SimpleTask()
+	{
+
+	}
+
+	bool run(const uint8_t priority = 0)
+	{
+
+		if (_enabled && millis() - _lastcalled > _timeout) {
+
+			if (_cb) {
+				_cb(*this);
+
+				if (_repeat) {
+					_lastcalled = millis();
+
+				} else {
+					return true; //  calls delete!
+				}
+			}
+		}
+
+		return false;
+
+	}
+
+	SimpleTask & setTimeout(uint32_t timeout)
+	{
+		_timeout = timeout;
+		return *this;
+	}
+
+	SimpleTask & setRepeat(bool repeat = true)
+	{
+		_repeat = repeat;
+		return *this;
+	}
+
+	SimpleTask & enable(bool val = true)
+	{
+		_enabled = val;
+		return *this;
+	}
+
+	SimpleTask & reset() {
+		_lastcalled = millis();
+		return *this; 
+	}
+
+private:
+
+
+	taskerCb_t  _cb;
+	bool _repeat{false};
+	uint32_t _timeout{0};
+	uint32_t _lastcalled{0};
+	bool _enabled{true};
 
 };
 
