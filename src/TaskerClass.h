@@ -9,12 +9,16 @@
 #include <list>
 #include <memory>
 
-class TaskerBase {
+class TaskerBase
+{
 public:
-	virtual ~TaskerBase() {} 
-
-
+	virtual ~TaskerBase() {}
+	virtual void debugOut(Stream & stream, uint indexNum = 0 , uint indentlevel = 0) {}; 
+	virtual void test() {} 
 };
+
+class TaskBase; 
+
 
 template <class TaskType, class LoopMethod>
 class Tasker: public LoopMethod, public TaskerBase
@@ -22,10 +26,21 @@ class Tasker: public LoopMethod, public TaskerBase
 public:
 	typedef LoopMethod loop_m;
 	typedef TaskType task_t;
-	typedef std::weak_ptr<TaskerBase> baseListPtrType_t;
-	typedef std::list<baseListPtrType_t> baseList_t;
-	//typedef std::shared_ptr<TaskerType> tasker_p;
-	typedef std::function<void(TaskType&)> taskerCb_t;
+
+	using  LoopMethod::_it;
+	using  LoopMethod::_list;
+
+	using   LoopMethod::dumpTask;
+	using   LoopMethod::baseMethods::printprechar;
+
+
+	using typename LoopMethod::taskerCb_t;
+	using typename LoopMethod::subTaskStorage_t;
+
+	using typename LoopMethod::taskList_t;
+	using typename LoopMethod::taskStorage_t;
+
+	using typename LoopMethod::taskPairStorage_t;
 
 
 	static uint8_t tasker_id;
@@ -36,24 +51,26 @@ public:
 	{
 
 		DEBUG_TASKERf("~Tasker() %p\n", this);
-		LoopMethod::_list.clear(); 
+	
+		//_list.clear();
 
 	};
 
-	TaskType & add(taskerCb_t Cb, bool useMicros = false)
+
+
+
+
+
+
+
+	TaskType & add(taskerCb_t Cb, bool useMicros = false )
 	{
 
-		LoopMethod::_list.push_back(typename LoopMethod::task_t(new TaskType(Cb, useMicros)));
-		LoopMethod::_it = LoopMethod::_list.begin();
-
-
-		// TaskType * ret = &*LoopMethod::_list.back();
-
-		//Serial.printf("Added Task %p\n", ret);
-
-		return *LoopMethod::_list.back();
+		return _add(Cb, nullptr , useMicros);
 
 	}
+
+
 
 	TaskType & addBefore(taskerCb_t Cb, bool useMicros = false)
 	{
@@ -69,72 +86,127 @@ public:
 
 	}
 
-	bool goToTask(TaskType & task, bool runImmediately = false) {
+	bool goToTask(TaskType & task, bool runImmediately = false)
+	{
 
-	typename LoopMethod::taskList_t::iterator it;
-		for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); ++it ) {
-			if (&task == it->get()) {	
-				LoopMethod::_it == it  ;
-				if (runImmediately) {
-					it->run(0, true); 
-				}
-				return true;
-			} 
-		}
+		// typename LoopMethod::taskList_t::iterator it;
+		// 	for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); ++it ) {
+		// 		if (&task == it->get()) {
+		// 			LoopMethod::_it == it  ;
+		// 			if (runImmediately) {
+		// 				it->run(0, true);
+		// 			}
+		// 			return true;
+		// 		}
+		// 	}
 
-		return false; 
+		// 	return false;
 	}
 
 
 	bool remove(TaskType & task)
 	{
-		debugOut(Serial);
+		Serial.println("REMOVE TASK CALLED");
+		// debugOut(Serial);
 
-		typename LoopMethod::taskList_t::iterator it;
+		// typename LoopMethod::taskList_t::iterator it;
 
-		for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); ++it ) {
+		// for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); ++it ) {
 
-			if (&task == it->get()) {	
+		// 	/*
+		// 			Might need to add check here to destroy if it is a sub loop...  maybe...
+		// 	*/
+		// 	if (&task == it->first.get() ) {
 
-				LoopMethod::_list.erase(it); 
+		// 		LoopMethod::_list.erase(it);
 
-				if (LoopMethod::_it == it && LoopMethod::_it != LoopMethod::_list.end()) {	
-					LoopMethod::_it++;
-				} 
+		// 		if (LoopMethod::_it == it && LoopMethod::_it != LoopMethod::_list.end()) {
+		// 			LoopMethod::_it++;
+		// 		}
 
-				return true;
-			} 
-		}
+		// 		return true;
+		// 	}
+		// }
 
-		Serial.printf("task not found\n");
-		return false;
+		// Serial.printf("task not found\n");
+		 return false;
 	}
 
-	//  not a good function to have..  need to call onEnd for all tasks...  and will leave dangling sub tasks..  have to take ownership of weak pointers.. 
+	//  not a good function to have..  need to call onEnd for all tasks...  and will leave dangling sub tasks..  have to take ownership of weak pointers..
 	// void _clearList()
 	// {
 	// 	LoopMethod::_list.clear();
 	// }
 
-	void debugOut(Stream & stream)
+	void debugOut(Stream & stream, uint indexNum = 0, uint position = 0)
 	{
 
-		stream.printf("\n*****  Tasker %p *****  ", this);
-		stream.printf("Heap: %u\n", ESP.getFreeHeap());
-		stream.printf("Tasks Running :%u\n", LoopMethod::_list.size());
-		stream.printf("SubLoops Running :%u\n", _baseList.size());
-		//stream.printf("us Per Loop :%uus = %u cycles\n", _loopTime,rt microsecondsToClockCycles(_loopTime));
+		const uint indexNum_orig = indexNum; 
+		const uint position_orig = position; 
 
-		typename LoopMethod::taskList_t::iterator it;
-		uint16_t index = 0;
+		if (position == 0) {
+			stream.printf("\n*****  Tasker  *****  \n");
+			stream.printf("Heap: %u\n", ESP.getFreeHeap());
+		}
 
-		for (it = LoopMethod::_list.begin(); it != LoopMethod::_list.end(); it++ ) {
-			index++;
-			TaskType & t = **it;
-			stream.printf("[%s][%2u@%p] pr %u\tRun %3u\t\n", (t.name()) ? t.name() : "null" , index, &t, t.getPriority(), t.count  );
+		position = position + 2; 
+
+		if (position_orig) {
+
+			for (uint8_t i =0 ; i < position ; i++) { stream.print(" "); }
+
+			if (_parent) { _parent->test(); }
+		    
+		    stream.printf("%u. Tasker: %p - %u Tasks Running" ,indexNum_orig  ,this , _list.size());
+
+		    position = position + 2;
+
+		} else {
+			stream.printf("Tasker: %p - %u Tasks Running", this , _list.size());
 
 		}
-		stream.println("\n*****   END   *****\n  ");
+
+		if (_parent) {
+			Serial.printf(" Parent Tasker %p\n", _parent); 
+		} else {
+			Serial.println();
+		}
+
+		
+
+		typename LoopMethod::taskList_t::iterator it;
+		
+		uint index = 0;
+
+		for (it = _list.begin(); it != _list.end(); it++ ) {		
+
+			index++;
+
+			//uint8_t tempindent = indentlevel; 
+
+			if (it->second) {
+				
+				//tempindent++;
+
+				auto ptr = it->second;
+				//  this means that this task is a nested task manager.... 
+				ptr->debugOut(stream, index, position);
+
+
+
+			} else {
+				dumpTask( *(it->first.get()) ,stream , position , index );
+			}
+
+		}
+
+		if (position_orig == 0) {
+
+			stream.println("*****   END   *****\n  ");
+
+		}
+
+		
 
 	}
 
@@ -164,41 +236,56 @@ public:
 	// }
 
 	template<class TaskerType>
-	std::shared_ptr<TaskerType> addSubTasker (bool doNotDelete = false)
+	TaskerType * addSubTasker (bool doNotDelete = false)
 	{
 
-		std::shared_ptr<TaskerType> ptr = std::make_shared<TaskerType>();  // create new smart pointer to tasker type...  sync or async...
+		//std::shared_ptr<TaskerType> ptr = std::make_shared<TaskerType>();  // create new smart pointer to tasker type...  sync or async...
 
-		baseListPtrType_t weak_ptr = baseListPtrType_t(ptr); 
+		//std::unique_ptr<TaskerType> ptr = std::make_unique<TaskerType>();  // create new smart pointer to tasker type...  sync or async...
 
-		_baseList.push_back( weak_ptr );
+		TaskerType * ptr = new TaskerType; 
 
-		typename TaskerType::task_t & task =  this->add( [ptr, this, doNotDelete, weak_ptr ] (task_t & t) {  // add the loop to it...
-			
-			//  this checks the count... if list is empty, no one is hanging onto the pointer for use later, and it is empty... then delete... 
+
+		typename TaskerType::task_t & task =  this->_add( [ ptr, doNotDelete, this ] (task_t & t) {  // add the loop to it...
+
+			//  this checks the count... if list is empty, no one is hanging onto the pointer for use later, and it is empty... then delete...
 			//  But only if the tasker is created with that in mind!!!!
-			
-			ptr->loop();
 
+			if (!doNotDelete && ptr->isEmpty()) {
 
-			if (!doNotDelete && ptr.unique() && ptr->isEmpty()){
-
-				DEBUG_TASKERf("LAMBDA: Removing %p from tasker %p\n", &t, this);
+				DEBUG_TASKERf("LOOP LAMBDA: Tasker %p is now empty %p setRepeat(false) \n", this , &t);
 				//this->remove(t); //  can't remove this as YOU ARE IN IT...
 				t.setRepeat(false);
-				this->removeSubLoop(weak_ptr);
+
+				//delete ptr; 
+
+				//this->removeSubLoop(weak_ptr);
 
 				//Serial.printf("LAMBDA: REturned \n");
 
-				return; 
+				return;
 			}
-			
+			// } else if ( ptr->isEmpty() ) {
+			// 	Serial.printf("LAMBDA: Unable to delete: doNotDelete = %s, unique = %s, ptrcount = %u, isEmpty = %s\n", 
+			// 		(doNotDelete)? "true" : "false", (ptr.unique())? "true" : "false", ptr.use_count(), (ptr->isEmpty())? "true" : "false",&t);
+			// 	delay(10000);
+			// }
 
-		}).setRepeat(true);
 
-		DEBUG_TASKERf("SUB TASK loop() resides in task %p in tasker %p \n", &task, this); 
 
-		return ptr;
+			ptr->loop();
+
+
+		}, ptr , false).setRepeat(true);
+
+		task.setName("LOOP TASK");
+
+		ptr->setParent(this); 
+
+		DEBUG_TASKERf("SUB TASK loop() for tasker %p resides in task %p in tasker %p \n", ptr ,&task, this);
+
+		//return std::weak_ptr<TaskerType>(ptr);
+		return ptr; 
 
 	}
 
@@ -207,34 +294,62 @@ public:
 		return (LoopMethod::_list.size() == 0);
 	}
 
-	void removeSubLoop(baseListPtrType_t const & wp) {
-		
-		_baseList.remove_if(  [&wp]( baseListPtrType_t p){
+	void test() {
+		printprechar(Serial); 
+	}
 
-			if ( wp.lock() == p.lock() ) {
-				Serial.printf("removeSubLoop called and returned TRUE\n"); 
-				return true;		
-			} else {
-				return false; 
-			}
+	// void removeSubLoop(baseListPtrType_t const & wp) {
+
+	// 	_baseList.remove_if(  [&wp]( baseListPtrType_t p){
+
+	// 		if ( wp.lock() == p.lock() ) {
+	// 			Serial.printf("removeSubLoop called and returned TRUE\n");
+	// 			return true;
+	// 		} else {
+	// 			return false;
+	// 		}
 
 
-		}); 
+	// 	});
 
 
+	// }
+
+	void setParent(TaskerBase * ptr) {
+		_parent = ptr; 
 	}
 
 
 
- private:
+private:
 
- 		baseList_t _baseList; 
-	// uint32_t _startTime{0};
-	// uint32_t _loopTime{0};
-	// uint32_t _loopCounter{0};
-//	uint32_t _maxWait{0};
+	TaskType & _add(taskerCb_t Cb, subTaskStorage_t subtasker_p, bool useMicros)
+	{
 
-	//task_t * _parentLoopTask{nullptr};
+		_list.push_back(
+		    taskPairStorage_t(
+		        taskStorage_t( new TaskType(Cb, useMicros))
+		        , subtasker_p
+		    )
+		);
+
+		_it = _list.begin();
+		TaskType * ret = _list.back().first.get();
+		//Serial.printf("Added Task %p, useMicros = %s, SubLoopTasker = %p\n", ret, (useMicros) ? "true" : "false", (subtasker_p) ? subtasker_p : nullptr );
+		return *ret;
+
+	}
+
+	TaskType & _add(taskerCb_t Cb, subTaskStorage_t subtasker_p)
+	{
+
+
+		return _add(Cb, subtasker_p, false);
+
+	}
+
+	TaskerBase* _parent{nullptr}; 
+
 
 
 };

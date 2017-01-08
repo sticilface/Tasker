@@ -39,22 +39,21 @@ Priority!  not sure how to do this...
 
 
 
-
 #include "TaskerClass.h"
-#include "TaskerManager.h"
 #include "Task.h"
-#include "Sequence.h"
 #include "TaskMethods.h"
 
 
 
 typedef Tasker<Task, Sync<Task>> SyncTasker;
-typedef Tasker<Task, ASync<Task>> ASyncTasker;  //  runs all the tasks at the same time.  multitasking.. 
-typedef Tasker<Sequence, Sync<Sequence>> SequenceTasker;
+typedef Tasker<Task, ASync<Task>> ASyncTasker;  //  runs all the tasks at the same time.  multitasking..
 
 
 typedef std::shared_ptr<SyncTasker> pSyncTasker;
 typedef std::shared_ptr<ASyncTasker> pASyncTasker;
+
+
+
 
 #endif
 

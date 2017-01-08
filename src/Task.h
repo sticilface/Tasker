@@ -11,7 +11,6 @@
 #include <list>
 #include <memory>
 
-
 class Task
 {
 
@@ -29,7 +28,7 @@ public:
 
 	~Task()
 	{
-		//Serial.printf("  Task deleted @%p (%s)\n", this, (_name) ? _name : "null" );
+		Serial.printf("~Task @%p (%s)\n", this, (_name) ? _name : "null" );
 		if (_onEnd) {
 			_onEnd();
 		}
@@ -44,7 +43,7 @@ public:
 				count++;
 
 				if (_cb) {
-					//if (count < 3 ) { Serial.printf("Run 0x%p (%s)\n", this, (_name)? _name : "null" ); }
+					
 					_cb(*this);
 
 					if (_repeat) {
@@ -54,7 +53,7 @@ public:
 						}
 
 					} else {
-
+						Serial.printf("Run returned : %s\n", (!_doNotDelete)? "true" : "false" );
 						return !_doNotDelete; //  calls delete!
 					}
 				}
@@ -151,6 +150,10 @@ public:
 		return *this;
 	}
 
+	bool running() {
+		return _running; 
+	}
+
 
 	uint32_t count{0};
 	//bool finished{false};
@@ -175,12 +178,14 @@ private:
 	const bool _useMicros{false};
 	bool _doNotDelete{false};
 
+	bool _running{false}; 
+
 };
 
 
 
 
-class SimpleTask
+class SimpleTask 
 {
 
 public:
@@ -243,7 +248,6 @@ public:
 	}
 
 private:
-
 
 	taskerCb_t  _cb;
 	bool _repeat{false};

@@ -10,18 +10,33 @@
 #include <memory>
 
 
+class baseMethods
+{
+public:
+	virtual ~baseMethods() {}
+	virtual void printprechar(Stream & stream){}
+
+
+
+};
+
+class TaskerBase;
+
 
 template<typename T>
-class ASync
+class ASync : public baseMethods
 {
 public:
 
-	typedef std::unique_ptr<T> task_t;
+	typedef std::unique_ptr<T> taskStorage_t;
 
+	typedef TaskerBase * subTaskStorage_t;
 
-	
-	typedef std::list<task_t> taskList_t;
+	typedef std::pair<taskStorage_t, subTaskStorage_t > taskPairStorage_t;
+	typedef std::list<taskPairStorage_t> taskList_t;  //  list now stores std:pair...
 	typedef std::function<void(void)> EmptyCb_t;
+	typedef std::function<void(T&)> taskerCb_t;
+
 
 	void loop()
 	{
@@ -41,23 +56,31 @@ public:
 
 		for ( /*   */ ; it != _list.end(); /*    */ ) {
 
-			bool todelete = false; 
+			bool todelete = false;
 
-			if (*_it) {
+			if (it->first) {
 				//Serial.printf("%p\n", it->get());
-				todelete = (*it)->run(_currentPriority);
+				todelete = (it->first)->run(_currentPriority);
 			}
 
 			if (todelete) {
-				//Serial.printf(" Function Finished: @%p (%s)\n", &*it, ((*it)->name())? (*it)->name() : "null" );
+				Serial.printf("ASYNC Finished: @%p (%s)  SubTaskptr(%p)\n", it->first.get(), (it->first->name())? it->first->name() : "null", it->second );
+				
+				if (it->second) {
+					Serial.printf("ASYNC SubTasker Loop Found: Calling Delete %p \n", it->second);
+					delete it->second;
+					it->second = nullptr;
+				}
+
 				it = _list.erase(it);
+
 			} else {
 				it++;
 			}
 
 			if (_maxWait && micros() - startTime > _maxWait) {
 				//Serial.println("Task Exit: Timeout Reached");
-				_it = it++;
+				_it = ++it;
 				return;
 			}
 
@@ -65,49 +88,7 @@ public:
 
 		_it = _list.end();
 
-
-		// while ( _it != _list.end()   ) {
-
-		// 	bool todelete = false;
-		// 	todelete = (*_it)->run(_currentPriority);
-
-		// 	if (todelete) {
-		// 		Serial.printf(" Function Finished: @%p (%s)\n", &*_it, ((*_it)->name())? (*_it)->name() : "null" );
-		// 		_it = _list.erase(_it);
-
-
-
-		// 	} else {
-		// 		_it++;
-		// 	}
-
-		// 	if (_maxWait && micros() - startTime > _maxWait) {
-		// 		_bailOut = true;
-		// 		//Serial.println("Task Exit: Timeout Reached");
-		// 		return;
-		// 	}
-
-		// 	if ( _it == _list.end()) {
-		// 		_bailOut = false;
-		// 	}
-		// }
-
 	}
-
-	void sort()
-	{
-		_list.sort( [](const task_t& lhs, const task_t & rhs) {
-
-			return ( lhs->getPriority() < rhs->getPriority() );
-
-		});
-	}
-
-	// void enablePriority(bool value, uint32_t maxWait = 0)
-	// {
-	// 	_enablePriority = value;
-	// 	_maxWait = maxWait;
-	// }
 
 	void setPriority(uint8_t priority)
 	{
@@ -126,36 +107,31 @@ public:
 		_maxWait = wait;
 	}
 
-	// void SetEmptyFn(EmptyCb_t Fn) {
-	// 	listEmptyFn = Fn;
-	// }
 
-	// void clearList() {
+	void dumpTask( T & t , Stream & stream, uint & position , uint index)
+	{
 
-	// 	typename taskList_t::iterator ptr; 
+		for (uint8_t i = 0; i < position + 2 ; ++i) {  stream.printf(" "); }
 
-	// 	for (ptr = _list.begin(); ptr != _list.end(); ) {
-	// 		ptr = _list.erase(ptr);
-	// 	}
-	// }
+		stream.printf("%u. %p [%s][%s] priority %u, Run %3u\n", index , &t, (t.running()) ? "Y" : "N" , (t.name()) ? t.name() : "null" , t.getPriority(), t.count  );
 
+	}
+
+	void printprechar(Stream & stream) {
+		stream.print(""); 
+	}
 
 
 	taskList_t _list;
-
-
 	typename taskList_t::iterator _it;
-
 	bool listEmptyFnFlag{true};
 
 protected:
-	//EmptyCb_t listEmptyFn;
 
 private:
 
 	bool _bailOut{false};
 	uint32_t _maxWait{0};
-	//bool _enablePriority{false};
 	uint8_t _currentPriority{0};
 
 
@@ -171,14 +147,20 @@ private:
 
 */
 template<typename T>
-class Sync
+class Sync : public baseMethods
 {
 
 public:
 
-	typedef std::unique_ptr<T> task_t;
-	typedef std::list<task_t> taskList_t;
+	typedef std::unique_ptr<T> taskStorage_t;
+
+	typedef TaskerBase * subTaskStorage_t;
+
+	typedef std::pair<taskStorage_t, subTaskStorage_t > taskPairStorage_t;
+	typedef std::list<taskPairStorage_t> taskList_t;  //  list now stores std:pair...
 	typedef std::function<void(void)> EmptyCb_t;
+	typedef std::function<void(T&)> taskerCb_t;
+
 
 	void loop()
 	{
@@ -190,21 +172,30 @@ public:
 
 		if (_enable && _it != _list.end()) {
 
-			bool finished = false; 
+			bool finished = false;
 
-			if (*_it) {
-				finished = (*_it)->run(_currentPriority);
+			if (_it->first) {
+				finished = _it->first->run(_currentPriority);
 			}
 
 			if (finished) {
 
 				if (!_repeat) {
+					Serial.printf("SYNC Task Finished: @%p (%s) [%p]\n", _it->first.get(), (_it->first->name())? _it->first->name() : "null", _it->second  );
+					
+					if (_it->second) {
+
+						delete _it->second;
+					}
+
 					_it = _list.erase(_it); //  remove task once done, if not repeating!
+
 				} else {
-					_it++;
+					++_it;
 				}
 
-				(*_it)->reset(); //  this is important as it resets the start time for the next sequential task
+
+				_it->first->reset(); //  this is important as it resets the start time for the next sequential task
 
 				if (_repeat && _list.size() && _it == _list.end()) {
 					_it = _list.begin();
@@ -213,7 +204,7 @@ public:
 
 					for (it = _list.begin(); it != _list.end(); ++it ) {
 
-						(*it)->reset();
+						it->first->reset();
 
 					}
 				}
@@ -234,24 +225,27 @@ public:
 
 	void sort() {} //  empty function...
 
-	// void clearList() {
 
-	// 	typename taskList_t::iterator ptr; 
+	void dumpTask( T & t , Stream & stream, uint & position, uint index)
+	{
 
-	// 	for (ptr = _list.begin(); ptr != _list.end(); ) {
-	// 		ptr = _list.erase(ptr);
-	// 	}
-	// }
+		position++; 
 
+		for (uint8_t i = 0; i < position; ++i) {  stream.printf(" "); }
 
+		stream.printf("└ %u. %p [%s][%s] \n", index , &t, (t.running()) ? "Y" : "N" , (t.name()) ? t.name() : "null" );
 
-	//bool listEmptyFnFlag{true};
+	}
+
+	void printprechar(Stream & stream) {
+		stream.print("└ "); 
+	}
+
 
 protected:
 
 	taskList_t _list;
 	typename taskList_t::iterator _it;
-	//EmptyCb_t listEmptyFn;
 
 private:
 	bool _enable{true};
