@@ -17,6 +17,17 @@ Priority!  not sure how to do this...
 
 #pragma once
 
+
+#define DEBUG_TASKER Serial
+
+#ifdef DEBUG_TASKER
+#define  DEBUG_TASKERf(...)  DEBUG_TASKER.printf(__VA_ARGS__)
+#else
+#define  DEBUG_TASKERf(...)  {}
+#endif
+
+
+
 #ifndef MY_TASKER_H
 #define MY_TASKER_H
 
@@ -26,8 +37,12 @@ Priority!  not sure how to do this...
 #include <memory>
 
 
+
+
+
 #include "TaskerClass.h"
-#include "msTask.h"
+#include "TaskerManager.h"
+#include "Task.h"
 #include "Sequence.h"
 #include "TaskMethods.h"
 

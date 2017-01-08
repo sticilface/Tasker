@@ -17,6 +17,9 @@ class ASync
 public:
 
 	typedef std::unique_ptr<T> task_t;
+
+
+	
 	typedef std::list<task_t> taskList_t;
 	typedef std::function<void(void)> EmptyCb_t;
 
