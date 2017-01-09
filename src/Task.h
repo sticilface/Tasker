@@ -81,6 +81,12 @@ public:
 		return *this;
 	}
 
+	uint32_t getTimeout() {
+		return _timeout; 
+	}
+
+
+
 	Task & setRepeat(bool repeat = true)
 	{
 		_repeat = repeat;

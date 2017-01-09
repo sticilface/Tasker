@@ -113,7 +113,7 @@ public:
 
 		for (uint8_t i = 0; i < position + 2 ; ++i) {  stream.printf(" "); }
 
-		stream.printf("%u. %p [%s][%s] priority %u, Run %3u\n", index , &t, (t.running()) ? "Y" : "N" , (t.name()) ? t.name() : "null" , t.getPriority(), t.count  );
+		stream.printf("%u. %p [%s][%s] priority %u, timeout = %u, runcount = %u\n", index , &t, (t.running()) ? "Y" : "N" , (t.name()) ? t.name() : "null" , t.getPriority(), t.getTimeout() ,t.count  );
 
 	}
 
@@ -233,7 +233,7 @@ public:
 
 		for (uint8_t i = 0; i < position; ++i) {  stream.printf(" "); }
 
-		stream.printf("└ %u. %p [%s][%s] \n", index , &t, (t.running()) ? "Y" : "N" , (t.name()) ? t.name() : "null" );
+		stream.printf("└ %u. %p [%s][%s] timeout = %u, runcount = %u\n", index , &t, (t.running()) ? "Y" : "N" , (t.name()) ? t.name() : "null", t.getTimeout(), t.count );
 
 	}
 

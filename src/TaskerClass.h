@@ -157,12 +157,12 @@ public:
 
 			if (_parent) { _parent->test(); }
 		    
-		    stream.printf("%u. Tasker: %p - %u Tasks Running" ,indexNum_orig  ,this , _list.size());
+		    stream.printf("%u. Tasker: %p - %u Tasks Running" ,indexNum_orig  , static_cast<TaskerBase*>(this) , _list.size());
 
 		    position = position + 2;
 
 		} else {
-			stream.printf("Tasker: %p - %u Tasks Running", this , _list.size());
+			stream.printf("Tasker: %p - %u Tasks Running", static_cast<TaskerBase*>(this) , _list.size());
 
 		}
 
@@ -282,7 +282,7 @@ public:
 
 		ptr->setParent(this); 
 
-		DEBUG_TASKERf("SUB TASK loop() for tasker %p resides in task %p in tasker %p \n", ptr ,&task, this);
+		DEBUG_TASKERf("SUB TASK loop() for tasker %p resides in task %p in tasker %p cast to %p\n", ptr ,&task, this, static_cast<TaskerBase*>(this));
 
 		//return std::weak_ptr<TaskerType>(ptr);
 		return ptr; 
@@ -317,6 +317,7 @@ public:
 
 	void setParent(TaskerBase * ptr) {
 		_parent = ptr; 
+		Serial.printf("PARENT in %p set to %p\n", this, _parent);
 	}
 
 
