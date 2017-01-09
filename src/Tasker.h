@@ -10,6 +10,7 @@ Priority!  not sure how to do this...
 
 0 = always run every loop
 
+to add Y N is running, enabled, disabled, 
 
 
 

@@ -50,7 +50,7 @@ public:
 	~Tasker()
 	{
 
-		DEBUG_TASKERf("~Tasker() %p\n", this);
+		//DEBUG_TASKERf("~Tasker() %p\n", this);
 	
 		//_list.clear();
 

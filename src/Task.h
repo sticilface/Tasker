@@ -28,7 +28,7 @@ public:
 
 	~Task()
 	{
-		Serial.printf("~Task @%p (%s)\n", this, (_name) ? _name : "null" );
+		//Serial.printf("~Task @%p (%s)\n", this, (_name) ? _name : "null" );
 		if (_onEnd) {
 			_onEnd();
 		}
@@ -53,7 +53,7 @@ public:
 						}
 
 					} else {
-						Serial.printf("Run returned : %s\n", (!_doNotDelete)? "true" : "false" );
+						//Serial.printf("Run returned : %s\n", (!_doNotDelete)? "true" : "false" );
 						return !_doNotDelete; //  calls delete!
 					}
 				}

@@ -64,15 +64,17 @@ public:
 			}
 
 			if (todelete) {
-				Serial.printf("ASYNC Finished: @%p (%s)  SubTaskptr(%p)\n", it->first.get(), (it->first->name())? it->first->name() : "null", it->second );
+				//Serial.printf("ASYNC Finished: @%p (%s)  SubTaskptr(%p)\n", it->first.get(), (it->first->name())? it->first->name() : "null", it->second );
 				
 				if (it->second) {
-					Serial.printf("ASYNC SubTasker Loop Found: Calling Delete %p \n", it->second);
+					//Serial.printf("ASYNC SubTasker Loop Found: Calling Delete %p \n", it->second);
 					delete it->second;
 					it->second = nullptr;
 				}
 
 				it = _list.erase(it);
+
+				if (_list.size() == 0 ) { return; }
 
 			} else {
 				it++;
@@ -181,7 +183,7 @@ public:
 			if (finished) {
 
 				if (!_repeat) {
-					Serial.printf("SYNC Task Finished: @%p (%s) [%p]\n", _it->first.get(), (_it->first->name())? _it->first->name() : "null", _it->second  );
+					//Serial.printf("SYNC Task Finished: @%p (%s) [%p]\n", _it->first.get(), (_it->first->name())? _it->first->name() : "null", _it->second  );
 					
 					if (_it->second) {
 
@@ -189,6 +191,8 @@ public:
 					}
 
 					_it = _list.erase(_it); //  remove task once done, if not repeating!
+
+					if (_list.size() == 0 ) { return; }
 
 				} else {
 					++_it;
@@ -218,7 +222,7 @@ public:
 		_enable = enable;
 	}
 
-	void repeat(bool repeat)
+	void setRepeat(bool repeat)
 	{
 		_repeat = repeat;
 	}
@@ -230,9 +234,7 @@ public:
 	{
 
 		position++; 
-
 		for (uint8_t i = 0; i < position; ++i) {  stream.printf(" "); }
-
 		stream.printf("└ %u. %p [%s][%s] timeout = %u, runcount = %u\n", index , &t, (t.running()) ? "Y" : "N" , (t.name()) ? t.name() : "null", t.getTimeout(), t.count );
 
 	}
