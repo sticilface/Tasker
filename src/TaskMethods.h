@@ -16,11 +16,10 @@ public:
 	virtual ~baseMethods() {}
 	virtual void printprechar(Stream & stream){}
 
-
-
 };
 
 class TaskerBase;
+
 
 
 template<typename T>
@@ -40,7 +39,11 @@ public:
 
 	void loop()
 	{
+
 		uint32_t startTime = micros();
+		
+		// Serial.print("List Size = ");
+		// Serial.println(_list.size());
 
 		if (_list.size() == 0) {
 			return;
@@ -196,6 +199,10 @@ public:
 
 				} else {
 					++_it;
+				}
+
+				if (_it == _list.end()) {
+					_it = _list.begin(); 
 				}
 
 

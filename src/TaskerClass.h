@@ -43,9 +43,12 @@ public:
 	using typename LoopMethod::taskPairStorage_t;
 
 
-	static uint8_t tasker_id;
+	//static uint8_t tasker_id;
 
-	Tasker() {};
+	Tasker() {
+
+		_it = _list.begin();
+	};
 
 	~Tasker()
 	{
@@ -55,13 +58,6 @@ public:
 		//_list.clear();
 
 	};
-
-
-
-
-
-
-
 
 	TaskType & add(taskerCb_t Cb, bool useMicros = false )
 	{
@@ -100,7 +96,7 @@ public:
 		// 		}
 		// 	}
 
-		// 	return false;
+		 	return false;
 	}
 
 
@@ -140,13 +136,14 @@ public:
 
 	void debugOut(Stream & stream, uint indexNum = 0, uint position = 0)
 	{
+		yield(); //  for long outputs...
 
 		const uint indexNum_orig = indexNum; 
 		const uint position_orig = position; 
 
 		if (position == 0) {
 			stream.printf("\n*****  Tasker  *****  \n");
-			stream.printf("Heap: %u\n", ESP.getFreeHeap());
+			//stream.printf("Heap: %u\n", ESP.getFreeHeap());
 		}
 
 		position = position + 2; 
@@ -253,7 +250,7 @@ public:
 
 			if (!doNotDelete && ptr->isEmpty()) {
 
-				DEBUG_TASKERf("LOOP LAMBDA: Tasker %p is now empty %p setRepeat(false) \n", this , &t);
+//				DEBUG_TASKERf("LOOP LAMBDA: Tasker %p is now empty %p setRepeat(false) \n", this , &t);
 				//this->remove(t); //  can't remove this as YOU ARE IN IT...
 				t.setRepeat(false);
 
@@ -282,7 +279,7 @@ public:
 
 		ptr->setParent(this); 
 
-		DEBUG_TASKERf("SUB TASK loop() for tasker %p resides in task %p in tasker %p cast to %p\n", ptr ,&task, this, static_cast<TaskerBase*>(this));
+	//	DEBUG_TASKERf("SUB TASK loop() for tasker %p resides in task %p in tasker %p cast to %p\n", ptr ,&task, this, static_cast<TaskerBase*>(this));
 
 		//return std::weak_ptr<TaskerType>(ptr);
 		return ptr; 
@@ -317,9 +314,12 @@ public:
 
 	void setParent(TaskerBase * ptr) {
 		_parent = ptr; 
-		Serial.printf("PARENT in %p set to %p\n", this, _parent);
+		//Serial.printf("PARENT in %p set to %p\n", this, _parent);
 	}
 
+	// bool begin() {
+	// 	Serial.println("Tasker Begin");
+	// }
 
 
 private:

@@ -11,7 +11,7 @@ Most of the complexities are hidden under the hood, it seems to work very well.
 - SyncTasker - Creates a sequential Tasker that waits for previous event to finish before starting the next. 
 	-  This is good for running a sequence of events that depend on the previous finishing.  This tasker can be set to repeat which will continue to loop around. See Blink example using this. 
 - addSubTasker<class TaskerType>(TaskerType tasker) - This function is very powerfull.  It creates a new tasker, and adds the required loop functions to the parent tasker, and returns a pointer back to this new Tasker.  Available to any Tasker instance.  This allows you in any task to spawn a new tasker to run sync, or async along side existing tasks!!  all non blocking!  
-- Templated Tasks and loop methods, allow you to design your own Task types and loop methods if required, the basic types are created for you.  Plans are to implement light weight methods and tasks that don't occupy much ram.  So you can develop using the verbose outputs, and switch to lightweight for production. 
+- Templated Tasks and loop methods, allow you to design your own Task types and loop methods if required, the basic typedefs are created for you `ASyncTasker` and `SyncTasker`.  Plans are to implement light weight methods and tasks that don't occupy much RAM.  So you can develop using the verbose outputs, and switch to lightweight for production. 
 
 ### Examples
 
@@ -83,10 +83,11 @@ Tasker: 0x3ffef290 - 4 Tasks Running
                  └ 3. 0x3fff1474 [N][supernested] timeout = 10000, runcount = 0
 *****   END   *****
 ```
-Tasks run async just appear as numbers, tasks run sync and depend on the previous finishing have └ and are indented. 
+Tasks run async just appear as numbers, tasks run sync and depend on the previous finishing have └ and are indented.  The memory location of all taskers and tasks is given to help debugging. 
 
 ### Other
 - There are plans for a priority approach but it has not been implemented yet... watch this space. 
+- I also plan to write lightweight less RAM hungry versions.  
 
 
 

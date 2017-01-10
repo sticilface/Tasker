@@ -19,7 +19,7 @@ to add Y N is running, enabled, disabled,
 #pragma once
 
 
-#define DEBUG_TASKER Serial
+// #define DEBUG_TASKER Serial
 
 #ifdef DEBUG_TASKER
 #define  DEBUG_TASKERf(...)  DEBUG_TASKER.printf(__VA_ARGS__)
@@ -36,9 +36,6 @@ to add Y N is running, enabled, disabled,
 #include <functional>
 #include <list>
 #include <memory>
-
-
-
 
 #include "TaskerClass.h"
 #include "Task.h"

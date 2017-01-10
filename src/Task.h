@@ -28,7 +28,7 @@ public:
 
 	~Task()
 	{
-		//Serial.printf("~Task @%p (%s)\n", this, (_name) ? _name : "null" );
+		//q23[p;oSerial.printf("~Task @%p (%s)\n", this, (_name) ? _name : "null" );
 		if (_onEnd) {
 			_onEnd();
 		}
@@ -48,7 +48,7 @@ public:
 
 					if (_repeat) {
 						_lastcalled = _getTime();
-						if (_repeatNo == count) {
+						if (_repeatNo == (int)count) {
 							return !_doNotDelete;
 						}
 
