@@ -50,6 +50,12 @@ typedef Tasker<Task, ASync<Task>> ASyncTasker;  //  runs all the tasks at the sa
 typedef std::shared_ptr<SyncTasker> pSyncTasker;
 typedef std::shared_ptr<ASyncTasker> pASyncTasker;
 
+// #ifdef ESP8266
+
+// typedef Tasker<ScheduledTask, Sync<ScheduledTask>> SyncSchedTasker;
+// typedef Tasker<ScheduledTask, ASync<ScheduledTask>> ASyncSchedTasker;  //  runs all the tasks at the same time.  multitasking..
+
+// #endif
 
 
 

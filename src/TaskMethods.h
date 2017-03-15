@@ -45,8 +45,17 @@ public:
 		// Serial.print("List Size = ");
 		// Serial.println(_list.size());
 
-		if (_list.size() == 0) {
+		if (_list.size() == 0) {// return if there is nothing to run
 			return;
+		}
+
+		//  if its the first run then reset all the tasks to start from the loop time. not the time they were created! 
+		if (!_hasRun) {
+			typename taskList_t::iterator it;
+			for (it = _list.begin(); it != _list.end(); ++it) {
+				it->first->reset(); 
+			}
+			_hasRun = true; 
 		}
 
 		typename taskList_t::iterator it;
@@ -126,6 +135,8 @@ public:
 		stream.print(""); 
 	}
 
+	//void setRepeat(bool a) {};
+
 
 	taskList_t _list;
 	typename taskList_t::iterator _it;
@@ -135,9 +146,10 @@ protected:
 
 private:
 
-	bool _bailOut{false};
+	//bool _bailOut{false};
 	uint32_t _maxWait{0};
 	uint8_t _currentPriority{0};
+	bool _hasRun{false}; 
 
 
 };

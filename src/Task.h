@@ -10,6 +10,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <time.h>
 
 class Task
 {
@@ -23,7 +24,7 @@ public:
 	{
 		//Serial.printf("  Task created @%p\n", this);
 		_cb = cb;
-		_lastcalled = _getTime(); 
+		_lastcalled = _getTime();
 	}
 
 	~Task()
@@ -31,6 +32,10 @@ public:
 		//q23[p;oSerial.printf("~Task @%p (%s)\n", this, (_name) ? _name : "null" );
 		if (_onEnd) {
 			_onEnd();
+		}
+
+		if (_name) {
+			free( (char *)_name);
 		}
 	}
 
@@ -40,10 +45,14 @@ public:
 
 			if (override || (_getTime() - _lastcalled > _timeout)) {
 
+				if (_usetime && difftime(_time, time(nullptr)) > 0) {
+					return false; //  this returns false if there are remaining seconds left to execute..  otherwise proceed...
+				}
+
 				count++;
 
 				if (_cb) {
-					
+
 					_cb(*this);
 
 					if (_repeat) {
@@ -75,25 +84,80 @@ public:
 		return *this;
 	}
 
-	Task & setTimeout(uint32_t timeout)
+	// Task & setTimeout(const uint32_t timeout) // timeout in milliseconds/microseconds. 
+	// {
+	// 	_timeout = timeout;
+	// 	_usetime = false;
+	// 	return *this;
+	// }
+
+	Task & setTimeout(const uint32_t timeout)
 	{
 		_timeout = timeout;
+		_usetime = false;
 		return *this;
 	}
 
-	uint32_t getTimeout() {
-		return _timeout; 
+	Task & setTime(const time_t attime)
+	{
+
+		if (difftime(attime, time(nullptr)) > 0) {
+			_timeout = 1000; // set to 1 second resolution
+			_time = attime;
+			_usetime = true;
+		} else {
+			Serial.printf("Task set to run in the past\n");
+			_enabled = false;
+		}
+
+		return *this;
 	}
 
+	Task & setTime(tm * attime)
+	{
+		setTime(mktime(attime));
+		return *this;
+	}
+
+	uint32_t getTimeout()
+	{
+		return _timeout;
+	}
+
+	uint32_t getMsLeft() //  returns time to execution in ms...
+	{
+
+		if (_usetime) {
+			return  static_cast<uint32_t>( difftime(_time, time(nullptr)) * 1000) ;
+
+		} else {
+
+			return (((_lastcalled + _timeout) -  _getTime() )) ;
+		}
 
 
-	Task & setRepeat(bool repeat = true)
+	}
+
+	const time_t getNextRunTime() {
+
+		if (_usetime) {
+			return _time ;
+
+		} else {
+			time_t now = time(nullptr); 
+			tm t = *localtime( &now ); 
+			t.tm_sec = t.tm_sec +  ( getMsLeft() / 1000 ); 
+			return mktime(&t);
+		}		
+	}
+
+	Task & setRepeat(const bool repeat = true)
 	{
 		_repeat = repeat;
 		return *this;
 	}
 
-	Task & setRepeat(int number)
+	Task & setRepeat(const int number)
 	{
 		_repeatNo = number;
 
@@ -105,7 +169,7 @@ public:
 		return *this;
 	}
 
-	Task & setPriority(uint8_t pr)
+	Task & setPriority(const uint8_t pr)
 	{
 		_priority = pr;
 		return *this;
@@ -130,7 +194,10 @@ public:
 
 	Task & setName(const char * name)
 	{
-		_name = name;
+		if (_name) {
+			free( (char*)_name);
+		}
+		_name = strdup(name);
 		return *this;
 	}
 
@@ -141,7 +208,7 @@ public:
 
 	void reset()
 	{
-		_lastcalled = millis(); 
+		_lastcalled = millis();
 	}
 
 	Task & onEnd(std::function<void(void)> Cb)
@@ -156,20 +223,30 @@ public:
 		return *this;
 	}
 
-	bool running() {
-		return _running; 
+	// Task & at(uint32_t time)
+	// {
+	// 	_timeout = time;
+	// 	_at = true;
+	// 	return *this;
+	// }
+
+	bool running()
+	{
+		return _running;
 	}
 
 
 	uint32_t count{0};
 	//bool finished{false};
 
-private:
+protected:
 
 	inline uint32_t _getTime()
 	{
 		return (_useMicros) ? micros() : millis();
 	}
+
+private:
 
 	taskerCb_t  _cb;
 	bool _repeat{false};
@@ -179,19 +256,22 @@ private:
 	bool _enabled{true};
 	uint8_t _priority{0};
 	const char * _name{nullptr};
+	//bool _at{false};
 	//int8_t _state{ -1};
 	std::function<void(void)> _onEnd;
 	const bool _useMicros{false};
 	bool _doNotDelete{false};
 
-	bool _running{false}; 
+	bool _running{false};
+	time_t _time{0};
+	bool _usetime{false};
 
 };
 
 
 
 
-class SimpleTask 
+class SimpleTask
 {
 
 public:
@@ -248,9 +328,10 @@ public:
 		return *this;
 	}
 
-	SimpleTask & reset() {
+	SimpleTask & reset()
+	{
 		_lastcalled = millis();
-		return *this; 
+		return *this;
 	}
 
 private:
@@ -262,6 +343,37 @@ private:
 	bool _enabled{true};
 
 };
+
+
+
+
+// #ifdef ESP8266
+
+// class ScheduledTask : public Task
+// {
+
+// public:
+
+// 	using Task::taskerCb_t;
+// 	ScheduledTask (taskerCb_t cb, bool useMicros = false) : Task(cb,useMicros)
+// 	{
+// 		//Serial.printf("  Task created @%p\n", this);
+// 		_cb = cb;
+// 		_lastcalled = _getTime();
+// 	}
+
+
+// private:
+
+// 	taskerCb_t  _cb;
+// 	bool _repeat{false};
+// 	uint32_t _timeout{0};
+// 	uint32_t _lastcalled{0};
+// 	bool _enabled{true};
+
+// };
+
+// #endif //ESP8266
 
 
 #endif
