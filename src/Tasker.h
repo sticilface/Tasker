@@ -24,6 +24,7 @@ public:
 	~Task(); 
 	Task(cb_t cb);  
 	Task & add(cb_t cb = nullptr); 
+	bool remove(Task & task); 
 	bool run(); 
 	Task & setType(Task_t type); 
 	Task & setTimeout(uint32_t timeout);

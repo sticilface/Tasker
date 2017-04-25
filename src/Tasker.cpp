@@ -19,6 +19,11 @@ Task & Task::add(cb_t cb)
 	return *_storage.back().get();
 }
 
+bool Task::remove(Task & task) 
+{
+	
+}
+
 Task & Task::setType(Task_t type)
 {
 	_type = type;
