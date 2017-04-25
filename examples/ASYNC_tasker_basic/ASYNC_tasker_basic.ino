@@ -5,7 +5,7 @@
  * 
  */
 
-ASyncTasker tasker; 
+Task tasker; 
 
 void setup() {
   Serial.begin(115200);
@@ -22,5 +22,5 @@ Serial.println("READY\n");
 }
 
 void loop() {
-tasker.loop();
+tasker.run();
 }
