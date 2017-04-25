@@ -36,6 +36,7 @@ public:
 	uint32_t getTimeout(); 
 	String  getName(); 
 	void dump(Stream & stream, int indent = 0); 
+	bool canDelete(); 
 
 private:
 	Task_t _type{ASYNC}; 

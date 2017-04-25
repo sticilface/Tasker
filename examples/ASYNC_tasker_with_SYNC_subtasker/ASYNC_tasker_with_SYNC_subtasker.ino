@@ -5,7 +5,7 @@
  *  The sync subtasker is done after 3 seconds, then the other two tasks run. 
  */
 
-ASyncTasker tasker; 
+Task tasker; 
 
 void setup() {
   Serial.begin(115200);
@@ -19,15 +19,15 @@ void setup() {
         Serial.println("hello again"); 
     }).setTimeout(10000);  
 
-    auto subtasker = tasker.addSubTasker<SyncTasker>(); 
+    Task & subtasker = tasker.add().setType(Task::SYNC); 
 
-    subtasker->add( [] (Task & t) {
+    subtasker.add( [] (Task & t) {
         Serial.println("This is Subtask 1"); 
     }).setTimeout(1000);
-    subtasker->add( [] (Task & t) {
+    subtasker.add( [] (Task & t) {
         Serial.println("This is Subtask 2"); 
     }).setTimeout(1000);
-    subtasker->add( [] (Task & t) {
+    subtasker.add( [] (Task & t) {
         Serial.println("This is Subtask 3"); 
     }).setTimeout(1000);     
     
@@ -35,5 +35,5 @@ Serial.println("READY\n");
 }
 
 void loop() {
-tasker.loop();
+tasker.run();
 }

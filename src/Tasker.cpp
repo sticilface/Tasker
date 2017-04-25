@@ -8,6 +8,7 @@ Task::Task(cb_t cb)
 
 Task::~Task()
 {
+	Serial.printf("%p ~Task\n", this);
 	if (_endCb) {
 		_endCb();
 	}
@@ -40,7 +41,6 @@ Task & Task::setRepeat(bool repeat)
 Task & Task::setRepeat(int repeat)
 {
 	if (repeat >= 0) {
-		_repeat = true;
 		_remaining = repeat;
 	}
 	return *this;
@@ -61,7 +61,7 @@ Task & Task::setName(String  name)
 Task & Task::setMicros(bool useMicros)
 {
 	_useMicros = useMicros;
-	return *this; 
+	return *this;
 }
 
 Task::Task_state Task::getState()
@@ -88,29 +88,36 @@ bool Task::run()
 
 	if (_state == INIT) {
 		_state = WAITING;
-		_lastrun = (_useMicros)?micros():millis();
+		_lastrun = (_useMicros) ? micros() : millis();
 	}
 
-	if ( (_useMicros)?micros():millis() - _lastrun > _timeout) {
+	if ( (_useMicros) ? micros() : millis() - _lastrun > _timeout) {
+
+		bool hasRun = false;
 
 		/* Set Lastrun to current time */
-		_lastrun = (_useMicros)?micros():millis();
+		_lastrun = (_useMicros) ? micros() : millis();
 
 		/* Run Callback if one is attached and it has remaining runs*/
 		if (_remaining && _cb) {
 			_cb(*this);
+			hasRun = true; 
 		}
 		/* Decrement repeat counter if set */
 		if (_remaining > 0) {
 			_remaining--;
 		}
 
-		/*  run through attached tasks */ 
+		/*  run through attached tasks */
 		if (_storage.size()) {
 			for (st_t::iterator it = _storage.begin(); it != _storage.end() ; ) {
 				Task & t = **it;
 				if (t.run()) {
-					it = _storage.erase(it);  /*  if task is finished bump to next, regardless of type  */
+					if (t.canDelete()) {
+						it = _storage.erase(it);  /*  if task is finished bump to next, regardless of type  */
+					} else {
+						++it; 
+					}
 				} else if (_type == ASYNC) {
 					++it;					  /*  if task is ASYNC run the next one */
 				} else {
@@ -119,17 +126,18 @@ bool Task::run()
 			}
 		}
 
-		if ( !_storage.size() && ( !_repeat || !_remaining)) {
-			_state = FINISHED;
+		if (hasRun) {
 			return true;
 		}
 
 	}
+
 	return false;
 }
 
 
-void Task::dump(Stream & stream, int indent) {
+void Task::dump(Stream & stream, int indent)
+{
 
 	if (indent == 0) {
 		stream.println("             ******       Tasker Tasks      ******           ");
@@ -139,25 +147,32 @@ void Task::dump(Stream & stream, int indent) {
 		stream.print("  ");
 	}
 
-	stream.printf("[%p] %s, repeat = %s, remaining = %u, timeout = %ums, children =%u\n", this, _name.c_str(), (_repeat)?"true":"false", _remaining, _timeout, _storage.size()); 
+	stream.printf("[%p] %s, repeat = %s, remaining = %u, timeout = %ums, children =%u\n", this, _name.c_str(), (_repeat) ? "true" : "false", _remaining, _timeout, _storage.size());
 
 	if (_type == ASYNC) {
 		indent++;
 		for (st_t::iterator it = _storage.begin(); it != _storage.end() ; ++it) {
 			Task & t = **it;
-			t.dump(stream,indent); 
+			t.dump(stream, indent);
 		}
 	} else if (_type == SYNC) {
 		for (st_t::iterator it = _storage.begin(); it != _storage.end() ; ++it) {
 			indent++;
 			Task & t = **it;
-			t.dump(stream,indent); 
+			t.dump(stream, indent);
 		}
 	}
 
 }
 
-
+bool Task::canDelete()
+{
+	if ( !_storage.size() && !_repeat && !_remaining) {
+		return true;
+	} else {
+		return false; 
+	}
+}
 
 
 
