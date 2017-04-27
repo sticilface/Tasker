@@ -6,12 +6,16 @@
  * 
  */
 
-#pragma once
+#ifndef TASKER_H
+ #define TASKER_H
 
 #include <Arduino.h>
 #include <functional>
 #include <memory>
 #include <list>
+
+
+
 
 class Task {
 public:
@@ -60,3 +64,4 @@ private:
 	bool _canDelete{true}; 
 
 };
+
