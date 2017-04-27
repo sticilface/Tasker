@@ -24,12 +24,14 @@ public:
 	~Task(); 
 	Task(cb_t cb);  
 	Task & add(cb_t cb = nullptr); 
-	bool run(); 
+	bool remove(const Task * task);
+	bool run(bool override = true);  /*  override gives repeat behaviour */ 
 	Task & setType(Task_t type); 
 	Task & setTimeout(uint32_t timeout);
 	Task & setRepeat(bool repeat);
 	Task & setRepeat(int repeat); 
-	Task & setEndFn(endFn_t Fn); 
+	Task & setDelete(bool deletable); 
+	Task & onEnd(endFn_t Fn); 
 	Task & setName(String name); 
 	Task & setMicros(bool useMicros); 
 	Task_state getState(); 
@@ -37,6 +39,9 @@ public:
 	String  getName(); 
 	void dump(Stream & stream, int indent = 0); 
 	bool canDelete(); 
+
+	void reset(); 
+	bool finished();
 
 private:
 	Task_t _type{ASYNC}; 
@@ -50,5 +55,7 @@ private:
 	uint32_t _remaining{1}; 
 	String _name; 
 	bool _useMicros{false}; 
+	st_t::iterator _it; 
+	bool _canDelete{true}; 
 
 };
