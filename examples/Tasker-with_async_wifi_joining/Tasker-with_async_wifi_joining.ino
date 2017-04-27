@@ -10,7 +10,7 @@
 #include <ESP8266WiFi.h>
 #include <Tasker.h>
 
-ASyncTasker tasker;
+Task tasker;
 
 const char* ssid = "your-ssid";
 const char* password = "your-password";
@@ -51,7 +51,7 @@ void setup() {
 
 void loop() {
 
-  tasker.loop();
+  tasker.run();
   // The client will actually be disconnected
   // when the function returns and 'client' object is detroyed
 }

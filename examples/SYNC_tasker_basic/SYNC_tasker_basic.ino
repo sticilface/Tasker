@@ -5,22 +5,23 @@
  * 
  */
 
-SyncTasker tasker; 
+Task tasker; 
 
 void setup() {
   Serial.begin(115200);
+  tasker.setType(Task::SYNC); 
   Serial.print("\nBOOTING....");
-    // prints hello after 10 seconds. 
+    // prints hello after 2 seconds. 
     tasker.add( [] (Task & t) {
         Serial.println("hello"); 
-    }).setTimeout(10000); 
-   // prints hello again after 20 seconds 
+    }).setTimeout(2000); 
+   // prints hello again, 5 seconds after first hello
     tasker.add( [] (Task & t) {
         Serial.println("hello again"); 
-    }).setTimeout(10000);  
+    }).setTimeout(5000);  
 Serial.println("READY\n");
 }
 
 void loop() {
-tasker.loop();
+tasker.run();
 }
