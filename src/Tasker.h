@@ -26,6 +26,7 @@ public:
 	Task & add(cb_t cb = nullptr); 
 	bool remove(const Task * task);
 	bool run(bool override = true);  /*  override gives repeat behaviour */ 
+	void runNow();
 	Task & setType(Task_t type); 
 	Task & setTimeout(uint32_t timeout);
 	Task & setRepeat(bool repeat);

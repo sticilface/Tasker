@@ -35,7 +35,7 @@ Task & Task::setTimeout(uint32_t timeout)
 Task & Task::setRepeat(bool repeat)
 {
 	_repeat = repeat;
-	_remaining = 0; 
+	_remaining = 0;
 	return *this;
 }
 
@@ -43,7 +43,7 @@ Task & Task::setRepeat(int repeat)
 {
 	if (repeat >= 0) {
 		_remaining = repeat;
-		_repeat = false; 
+		_repeat = false;
 	}
 	return *this;
 }
@@ -61,9 +61,9 @@ Task & Task::setName(String  name)
 }
 
 Task & Task::setDelete(bool deletable)
-{	
+{
 	_canDelete = deletable;
-	return *this; 
+	return *this;
 }
 
 Task & Task::setMicros(bool useMicros)
@@ -91,12 +91,23 @@ String Task::getName()
 	}
 }
 
+void Task::runNow()
+{
+	if (_cb) {
+		_lastrun = (_useMicros) ? micros() : millis();
+		_cb(*this);
+		if (_remaining > 0) {
+			_remaining--;
+		}
+
+	}
+}
 
 /**
  *
- *	Need to allow countdown to be reset.  ie... run 5 times then done, but if repeat set.. 
- *	dont delete, but allow it to be reset to run another 5 times.   
- * 
+ *	Need to allow countdown to be reset.  ie... run 5 times then done, but if repeat set..
+ *	dont delete, but allow it to be reset to run another 5 times.
+ *
  */
 bool Task::run(bool override)
 {
@@ -104,7 +115,7 @@ bool Task::run(bool override)
 	if (_state == INIT) {
 		_state = WAITING;
 		_lastrun = (_useMicros) ? micros() : millis();
-		_it = _storage.begin(); 
+		_it = _storage.begin();
 	}
 
 	if ( ( (_useMicros) ? micros() : millis() ) - _lastrun > _timeout) {
@@ -117,7 +128,7 @@ bool Task::run(bool override)
 		/* Run Callback if one is attached and it has remaining runs, is repeat, or overridden*/
 		if ( (_remaining || _repeat || override) && _cb) {
 			_cb(*this);
-			hasRun = true; 
+			hasRun = true;
 		}
 		/* Decrement repeat counter if being used */
 		if (_remaining > 0) {
@@ -139,11 +150,11 @@ bool Task::run(bool override)
 						_it = _storage.erase(_it);  /*  if task is finished bump to next, regardless of type  */
 					} else if (!t.finished()) {
 						//Serial.printf("[%p] Waiting.... \n", this);
-						break; 
+						break;
 					} else {
 						//Serial.printf("[%p] Advancing to NEXT \n", this);
-						++_it;  /*  if its finished, bump to the next , but not if it has remaining runs or is repeat */ 
-					} 
+						++_it;  /*  if its finished, bump to the next , but not if it has remaining runs or is repeat */
+					}
 				} else if (_type == ASYNC) {
 					++_it;					  /*  if task is ASYNC move onto the next one */
 				} else {
@@ -181,7 +192,7 @@ void Task::dump(Stream & stream, int indent)
 		stream.print("  ");
 	}
 
-	stream.printf("[%p] %s, type = %s, repeat = %s, remaining = %u, timeout = %ums, children =%u\n", this, _name.c_str(), (_type == ASYNC)? "ASYNC" : "SYNC" ,(_repeat) ? "true" : "false", _remaining, _timeout, _storage.size());
+	stream.printf("[%p] %s, type = %s, repeat = %s, remaining = %u, timeout = %ums, children =%u\n", this, _name.c_str(), (_type == ASYNC) ? "ASYNC" : "SYNC" , (_repeat) ? "true" : "false", _remaining, _timeout, _storage.size());
 
 	if (_type == ASYNC) {
 		indent++;
@@ -205,35 +216,36 @@ bool Task::canDelete()
 		//Serial.printf("   [%p] canDelete() = true\n", this);
 		return true;
 	} else {
-		return false; 
+		return false;
 	}
 }
 
 void Task::reset()
 {
-	_state = INIT; 
-	//  need to add resest to init count.. etc.... 
+	_state = INIT;
+	//  need to add resest to init count.. etc....
 }
 
 bool Task::remove(const Task * task)
 {
-	for (auto it = _storage.begin() ; it != _storage.end() ; ++it) { 
-		Task & t = **it; 
+	for (auto it = _storage.begin() ; it != _storage.end() ; ++it) {
+		Task & t = **it;
 		if (&t == task) {
 			_storage.erase(it);
-			return true; 
+			return true;
 		} else {
-			return t.remove(task); 
+			return t.remove(task);
 		}
 	}
-	return false; 
+	return false;
 }
 
-bool Task::finished() {
- if (!_storage.size() && !_repeat && !_remaining) {
- 	return true;
- } else {
- 	return false; 
- }
+bool Task::finished()
+{
+	if (!_storage.size() && !_repeat && !_remaining) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
