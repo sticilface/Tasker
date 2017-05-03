@@ -228,13 +228,17 @@ void Task::reset()
 
 bool Task::remove(const Task * task)
 {
+	if (!task) return false;  
 	for (auto it = _storage.begin() ; it != _storage.end() ; ++it) {
 		Task & t = **it;
 		if (&t == task) {
+			if (it == _it) {
+				++_it; 
+			}
 			_storage.erase(it);
 			return true;
 		} else {
-			return t.remove(task);
+			return t.remove(task); //  remove nested tasks... if found there... 
 		}
 	}
 	return false;
