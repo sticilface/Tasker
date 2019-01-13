@@ -111,7 +111,7 @@ void Task::runNow()
  */
 bool Task::run(bool override)
 {
-
+	_currentTask = this; 
 	if (_state == INIT) {
 		_state = WAITING;
 		_lastrun = (_useMicros) ? micros() : millis();
@@ -169,6 +169,8 @@ bool Task::run(bool override)
 				_it = _storage.begin();
 			}
 		}
+
+		_currentTask = nullptr; 
 
 		if (hasRun) {
 			//Serial.printf("   [%p] hasRun = true\n", this);
@@ -228,7 +230,15 @@ void Task::reset()
 
 bool Task::remove(const Task * task)
 {
-	if (!task) return false;  
+	if (!task) return false;
+
+	if (task == _currentTask) {
+		//  preventing remove being called whilst in call back... 
+		_currentTask->setRepeat(false); 
+		_currentTask->setDelete(true); 
+		return true; 
+	}
+
 	for (auto it = _storage.begin() ; it != _storage.end() ; ++it) {
 		Task & t = **it;
 		if (&t == task) {

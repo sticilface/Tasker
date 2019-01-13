@@ -62,7 +62,7 @@ private:
 	bool _useMicros{false}; 
 	st_t::iterator _it; 
 	bool _canDelete{true}; 
-
+	Task * _currentTask{nullptr}; 
 };
 
 #endif
