@@ -137,7 +137,7 @@ bool Task::run(bool override)
 
 		/*  run through attached tasks */
 		if (_storage.size()) {
-			for ( _it  ; _it != _storage.end() ; ) {
+			for (  ; _it != _storage.end() ; ) {
 				Task & t = **_it;
 
 				if (t.canDelete()) {
